@@ -38,7 +38,14 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        // 公开接口 - 认证
                         .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+                        // 公开接口 - 商品浏览和搜索
+                        .requestMatchers("/api/products/search", "/api/products/latest", "/api/products/hot").permitAll()
+                        .requestMatchers("/api/products/{id}").permitAll()
+                        // 公开接口 - 分类
+                        .requestMatchers("/api/categories/**").permitAll()
+                        // 其他接口需要认证
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

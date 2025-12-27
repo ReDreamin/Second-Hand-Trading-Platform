@@ -2,14 +2,12 @@ package com.secondhand.platform.service;
 
 import com.secondhand.platform.entity.UserAccount;
 import com.secondhand.platform.repository.UserAccountRepository;
+import com.secondhand.platform.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-
-import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
@@ -26,10 +24,6 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("User is disabled or deleted: " + username);
         }
 
-        return new User(
-                user.getUsername(),
-                user.getPasswordHash(),
-                Collections.emptyList()
-        );
+        return new UserPrincipal(user);
     }
 }

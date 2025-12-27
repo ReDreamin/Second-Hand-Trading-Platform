@@ -1,11 +1,12 @@
 package com.secondhand.platform.controller;
 
 import com.secondhand.platform.dto.*;
+import com.secondhand.platform.security.UserPrincipal;
 import com.secondhand.platform.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -31,9 +32,9 @@ public class AuthController {
 
     @PostMapping("/change-password")
     public ResponseEntity<ApiResponse<Void>> changePassword(
-            Authentication authentication,
+            @AuthenticationPrincipal UserPrincipal user,
             @Valid @RequestBody ChangePasswordRequest request) {
-        authService.changePassword(authentication.getName(), request);
+        authService.changePassword(user.getUsername(), request);
         return ResponseEntity.ok(ApiResponse.success("Password changed successfully", null));
     }
 }
