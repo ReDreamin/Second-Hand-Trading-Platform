@@ -41,14 +41,23 @@ request.interceptors.response.use(
   },
   (error: AxiosError<ApiResponse>) => {
     if (error.response) {
-      const { status, data } = error.response;
+      const { status, data, config } = error.response;
+      const requestUrl = config?.url || '';
+
+      // 判断是否是登录/注册接口
+      const isAuthRequest = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/register');
 
       switch (status) {
         case 401:
-          // token 过期或无效，清除认证信息并跳转登录页
-          message.error('登录已过期，请重新登录');
-          storage.clearAuth();
-          window.location.href = '/auth';
+          if (isAuthRequest) {
+            // 登录/注册接口返回401，显示具体错误信息
+            message.error(data?.message || '用户名或密码错误');
+          } else {
+            // 其他接口返回401，token过期，跳转登录页
+            message.error('登录已过期，请重新登录');
+            storage.clearAuth();
+            window.location.href = '/auth';
+          }
           break;
         case 403:
           message.error('没有权限访问');

@@ -8,6 +8,14 @@ import type { Product } from '../../types';
 import { CategoryLabels } from '../../types';
 import styles from './index.module.css';
 
+const API_BASE = 'http://localhost:8080';
+
+const getImageUrl = (url: string) => {
+  if (!url) return '/placeholder.png';
+  if (url.startsWith('/uploads')) return `${API_BASE}${url}`;
+  return url;
+};
+
 const MyProducts: React.FC = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
@@ -28,30 +36,12 @@ const MyProducts: React.FC = () => {
       setProducts(response.data.data.list);
       setTotal(response.data.data.total);
     } catch {
-      // 模拟数据
-      setProducts(getMockProducts());
-      setTotal(5);
+      // 错误已在拦截器中处理
+      setProducts([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
-  };
-
-  // 模拟数据
-  const getMockProducts = (): Product[] => {
-    return Array.from({ length: 5 }, (_, i) => ({
-      id: i + 1,
-      name: `我的商品 ${i + 1}`,
-      category: 'electronics' as const,
-      price: Math.floor(Math.random() * 500) + 50,
-      stock: Math.floor(Math.random() * 10) + 1,
-      description: '这是商品描述',
-      images: [`https://picsum.photos/100/100?random=${i}`],
-      sellerId: 1,
-      sellerName: '我',
-      status: 'on_sale' as const,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }));
   };
 
   const handleDelete = async (id: number) => {
@@ -60,9 +50,7 @@ const MyProducts: React.FC = () => {
       message.success('商品已下架');
       fetchProducts();
     } catch {
-      // 模拟成功
-      message.success('商品已下架');
-      setProducts((prev) => prev.filter((p) => p.id !== id));
+      // 错误已在拦截器中处理
     }
   };
 
@@ -74,7 +62,7 @@ const MyProducts: React.FC = () => {
       width: 100,
       render: (images: string[]) => (
         <Image
-          src={images[0] || '/placeholder.png'}
+          src={getImageUrl(images?.[0])}
           alt="商品图片"
           width={60}
           height={60}

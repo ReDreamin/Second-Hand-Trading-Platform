@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn clean compile:*)",
+      "Bash(mvn spring-boot:run:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(timeout:*)",
+      "Bash(python generate_mock_data.py:*)",
+      "Bash(dir:*)",
+      "Bash(docker exec:*)",
+      "Bash(curl:*)",
+      "Bash(mvn compile spring-boot:run:*)"
+    ]
+  }
+}

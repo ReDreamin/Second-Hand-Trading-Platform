@@ -4,6 +4,8 @@ import type { Product } from '../../types';
 import { CategoryLabels } from '../../types';
 import styles from './index.module.css';
 
+const API_BASE = 'http://localhost:8080';
+
 interface ProductCardProps {
   product: Product;
 }
@@ -28,7 +30,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div className={styles.imageWrapper}>
           <img
             alt={product.name}
-            src={product.images[0] || '/placeholder.png'}
+            src={product.images[0]?.startsWith('/uploads') ? `${API_BASE}${product.images[0]}` : (product.images[0] || '/placeholder.png')}
             className={styles.image}
           />
           {product.stock === 0 && (

@@ -1,34 +1,3 @@
-CREATE TABLE user_accounts (
-  id BIGSERIAL PRIMARY KEY,
-
-  username VARCHAR(64) UNIQUE,
-  email VARCHAR(128) UNIQUE,
-  phone VARCHAR(32) UNIQUE,
-
-  password_hash TEXT NOT NULL,      -- 永远不存明文
-  password_algo VARCHAR(32),         -- bcrypt / argon2
-
-  status SMALLINT NOT NULL DEFAULT 1,
-  -- 1: normal, 0: disabled, -1: deleted
-
-  created_at TIMESTAMP DEFAULT now(),
-  updated_at TIMESTAMP DEFAULT now()
-);
-
-CREATE TABLE user_profiles (
-  user_id BIGINT PRIMARY KEY REFERENCES user_accounts(id),
-
-  nickname VARCHAR(64),
-  avatar_url TEXT,
-  gender SMALLINT,
-  birthday DATE,
-  bio TEXT,
-
-  updated_at TIMESTAMP DEFAULT now()
-);
-
--- ===================== 商品相关表 =====================
-
 -- 商品分类表
 CREATE TABLE categories (
     id SERIAL PRIMARY KEY,
@@ -61,7 +30,7 @@ CREATE TABLE products (
     location VARCHAR(128),
     view_count INT DEFAULT 0,
 
-    -- 全文搜索字段
+    -- 全文搜索向量 (中文需要配置分词器，这里用简单方案)
     search_text TEXT,
 
     created_at TIMESTAMP DEFAULT now(),

@@ -18,6 +18,14 @@ import type { Product } from '../../types';
 import { CategoryLabels } from '../../types';
 import styles from './index.module.css';
 
+const API_BASE = 'http://localhost:8080';
+
+const getImageUrl = (url: string) => {
+  if (!url) return '/placeholder.png';
+  if (url.startsWith('/uploads')) return `${API_BASE}${url}`;
+  return url;
+};
+
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -39,25 +47,8 @@ const ProductDetail: React.FC = () => {
       const response = await getProductDetail(productId);
       setProduct(response.data.data);
     } catch {
-      // 模拟数据
-      setProduct({
-        id: productId,
-        name: '示例商品名称',
-        category: 'electronics',
-        price: 299.99,
-        stock: 5,
-        description: '这是一个示例商品描述。商品成色很新，使用时间不长，功能完好。欢迎感兴趣的朋友咨询购买。',
-        images: [
-          'https://picsum.photos/600/400?random=1',
-          'https://picsum.photos/600/400?random=2',
-          'https://picsum.photos/600/400?random=3',
-        ],
-        sellerId: 1,
-        sellerName: '卖家用户',
-        status: 'on_sale',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
+      // 错误已在拦截器中处理
+      setProduct(null);
     } finally {
       setLoading(false);
     }
@@ -126,7 +117,7 @@ const ProductDetail: React.FC = () => {
           <div className={styles.imageSection}>
             <div className={styles.mainImage}>
               <Image
-                src={product.images[currentImage] || '/placeholder.png'}
+                src={getImageUrl(product.images[currentImage])}
                 alt={product.name}
                 width="100%"
                 height={400}
@@ -143,7 +134,7 @@ const ProductDetail: React.FC = () => {
                     }`}
                     onClick={() => setCurrentImage(index)}
                   >
-                    <img src={img} alt={`缩略图 ${index + 1}`} />
+                    <img src={getImageUrl(img)} alt={`缩略图 ${index + 1}`} />
                   </div>
                 ))}
               </div>

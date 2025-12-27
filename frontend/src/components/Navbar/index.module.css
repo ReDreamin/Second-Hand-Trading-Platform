@@ -3,10 +3,19 @@
   top: 0;
   left: 0;
   right: 0;
-  height: var(--header-height);
+  z-index: 1000;
   background: var(--color-dark);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
+}
+
+.topRow {
+  height: 64px;
+  border-bottom: 1px solid var(--color-gray-dark);
+}
+
+.categoryRow {
+  height: 44px;
+  background: var(--color-gray-dark);
 }
 
 .container {
@@ -42,7 +51,8 @@
   display: flex;
   gap: 8px;
   flex: 1;
-  max-width: 400px;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .searchInput {
@@ -54,13 +64,14 @@
   gap: 8px;
   flex-wrap: nowrap;
   overflow-x: auto;
-  flex-shrink: 0;
+  flex: 1;
+  justify-content: center;
 }
 
 .categoryTag {
-  padding: 4px 12px;
+  padding: 6px 16px;
   border-radius: 16px;
-  background: var(--color-gray-dark);
+  background: transparent;
   color: var(--color-gray-light);
   font-size: 14px;
   cursor: pointer;
@@ -69,8 +80,8 @@
 }
 
 .categoryTag:hover {
-  background: var(--color-gray);
   color: var(--color-white);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .categoryTag.active {
@@ -83,8 +94,21 @@
 }
 
 .userInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   cursor: pointer;
-  color: var(--color-white);
+  padding: 4px 12px;
+  border-radius: 20px;
+  transition: background 0.3s;
+}
+
+.userInfo:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.avatar {
+  border: 2px solid var(--color-primary);
 }
 
 .username {
@@ -93,12 +117,6 @@
 }
 
 /* 响应式 */
-@media (max-width: 1024px) {
-  .categories {
-    display: none;
-  }
-}
-
 @media (max-width: 768px) {
   .container {
     padding: 0 16px;
@@ -106,10 +124,15 @@
   }
 
   .search {
-    max-width: 200px;
+    max-width: 280px;
   }
 
   .logoText {
     display: none;
+  }
+
+  .categoryTag {
+    padding: 4px 12px;
+    font-size: 13px;
   }
 }

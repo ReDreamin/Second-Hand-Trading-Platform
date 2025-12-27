@@ -7,6 +7,9 @@ import ProductDetail from '../pages/ProductDetail';
 import ProductUpload from '../pages/ProductUpload';
 import MyProducts from '../pages/MyProducts';
 import Payment from '../pages/Payment';
+import Profile from '../pages/Profile';
+import Orders from '../pages/Orders';
+import Purchases from '../pages/Purchases';
 
 const router = createBrowserRouter([
   {
@@ -34,6 +37,30 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <MyProducts />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'profile',
+        element: (
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'orders',
+        element: (
+          <ProtectedRoute>
+            <Orders />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'purchases',
+        element: (
+          <ProtectedRoute>
+            <Purchases />
           </ProtectedRoute>
         ),
       },

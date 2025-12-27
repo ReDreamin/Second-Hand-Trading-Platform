@@ -35,31 +35,11 @@ const Home: React.FC = () => {
       setTotal(response.data.data.total);
     } catch {
       // 错误已在拦截器中处理
-      // 开发阶段使用模拟数据
-      setProducts(getMockProducts());
-      setTotal(24);
+      setProducts([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
-  };
-
-  // 模拟数据（开发阶段使用）
-  const getMockProducts = (): Product[] => {
-    const categories: ProductCategory[] = ['clothing', 'electronics', 'shoes', 'study', 'daily', 'sports', 'books', 'other'];
-    return Array.from({ length: 12 }, (_, i) => ({
-      id: i + 1,
-      name: `商品名称 ${i + 1}`,
-      category: categories[i % categories.length],
-      price: Math.floor(Math.random() * 500) + 50,
-      stock: Math.floor(Math.random() * 10) + 1,
-      description: '这是商品描述',
-      images: [`https://picsum.photos/300/200?random=${i}`],
-      sellerId: 1,
-      sellerName: '卖家用户',
-      status: 'on_sale' as const,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }));
   };
 
   const handlePageChange = (newPage: number) => {
