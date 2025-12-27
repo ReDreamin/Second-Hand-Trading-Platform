@@ -66,7 +66,8 @@ public class AuthService {
         // Generate JWT token
         String token = jwtUtil.generateToken(userAccount.getId(), userAccount.getUsername());
 
-        return AuthResponse.of(token, userAccount.getId(), userAccount.getUsername(), userAccount.getEmail());
+        return AuthResponse.of(token, userAccount.getId(), userAccount.getUsername(),
+                userAccount.getEmail(), userAccount.getPhone(), userAccount.getCreatedAt());
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -87,7 +88,8 @@ public class AuthService {
         // Generate JWT token
         String token = jwtUtil.generateToken(userAccount.getId(), userAccount.getUsername());
 
-        return AuthResponse.of(token, userAccount.getId(), userAccount.getUsername(), userAccount.getEmail());
+        return AuthResponse.of(token, userAccount.getId(), userAccount.getUsername(),
+                userAccount.getEmail(), userAccount.getPhone(), userAccount.getCreatedAt());
     }
 
     @Transactional
