@@ -45,6 +45,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/products/{id}").permitAll()
                         // 公开接口 - 分类
                         .requestMatchers("/api/categories/**").permitAll()
+                        // 公开接口 - 上传的文件访问
+                        .requestMatchers("/uploads/**").permitAll()
                         // 其他接口需要认证
                         .anyRequest().authenticated()
                 )

@@ -2,6 +2,12 @@ server:
   port: 8080
 
 spring:
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 10MB
+
   datasource:
     url: jdbc:postgresql://localhost:5432/secondhand
     username: appuser
@@ -25,3 +31,7 @@ logging:
   level:
     com.secondhand: DEBUG
     org.springframework.security: DEBUG
+
+file:
+  upload-dir: uploads
+  max-size: 5242880

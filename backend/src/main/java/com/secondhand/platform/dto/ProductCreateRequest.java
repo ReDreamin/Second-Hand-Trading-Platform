@@ -13,31 +13,22 @@ import java.util.List;
 @AllArgsConstructor
 public class ProductCreateRequest {
 
-    @NotBlank(message = "Title is required")
-    @Size(max = 128, message = "Title must not exceed 128 characters")
-    private String title;
-
-    @NotBlank(message = "Cover image is required")
-    private String coverUrl;
+    @NotBlank(message = "商品名称不能为空")
+    @Size(max = 128, message = "商品名称不能超过128个字符")
+    private String name;
 
     private String description;
 
-    @NotNull(message = "Price is required")
-    @DecimalMin(value = "0.01", message = "Price must be greater than 0")
-    @Digits(integer = 8, fraction = 2, message = "Invalid price format")
+    @NotNull(message = "价格不能为空")
+    @DecimalMin(value = "0.01", message = "价格必须大于0")
+    @Digits(integer = 8, fraction = 2, message = "价格格式不正确")
     private BigDecimal price;
 
-    @Digits(integer = 8, fraction = 2, message = "Invalid original price format")
-    private BigDecimal originalPrice;
+    private String category;
 
-    private Integer categoryId;
+    @Min(value = 1, message = "库存必须大于0")
+    private Integer stock = 1;
 
-    @Min(value = 1, message = "Condition must be between 1 and 10")
-    @Max(value = 10, message = "Condition must be between 1 and 10")
-    private Short condition = 9;
-
-    @Size(max = 128, message = "Location must not exceed 128 characters")
-    private String location;
-
-    private List<String> imageUrls;
+    @NotEmpty(message = "请至少上传一张商品图片")
+    private List<String> images;
 }

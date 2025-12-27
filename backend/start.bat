@@ -7,6 +7,6 @@ echo ========================================
 echo.
 
 cd /d "%~dp0"
-call mvn spring-boot:run -DskipTests
+call mvn spring-boot:run
 
 pause

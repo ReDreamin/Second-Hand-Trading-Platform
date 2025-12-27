@@ -29,16 +29,22 @@ public class ProductService {
 
     @Transactional
     public ProductResponse createProduct(Long sellerId, ProductCreateRequest request) {
+        // 使用第一张图片作为封面
+        String coverUrl = request.getImages() != null && !request.getImages().isEmpty()
+                ? request.getImages().get(0)
+                : "";
+
+        // 将分类字符串映射为分类ID
+        Integer categoryId = mapCategoryToId(request.getCategory());
+
         Product product = Product.builder()
                 .sellerId(sellerId)
-                .title(request.getTitle())
-                .coverUrl(request.getCoverUrl())
+                .title(request.getName())
+                .coverUrl(coverUrl)
                 .description(request.getDescription())
                 .price(request.getPrice())
-                .originalPrice(request.getOriginalPrice())
-                .categoryId(request.getCategoryId())
-                .condition(request.getCondition() != null ? request.getCondition() : 9)
-                .location(request.getLocation())
+                .categoryId(categoryId)
+                .condition((short) 9)
                 .status((short) 1)
                 .viewCount(0)
                 .build();
@@ -46,11 +52,26 @@ public class ProductService {
         product = productRepository.save(product);
 
         // Save images
-        if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
-            saveProductImages(product.getId(), request.getImageUrls());
+        if (request.getImages() != null && !request.getImages().isEmpty()) {
+            saveProductImages(product.getId(), request.getImages());
         }
 
         return getProductById(product.getId());
+    }
+
+    private Integer mapCategoryToId(String category) {
+        if (category == null) return null;
+        return switch (category) {
+            case "clothing" -> 1;
+            case "electronics" -> 2;
+            case "shoes" -> 3;
+            case "study" -> 4;
+            case "daily" -> 5;
+            case "sports" -> 6;
+            case "books" -> 7;
+            case "other" -> 8;
+            default -> null;
+        };
     }
 
     @Transactional
