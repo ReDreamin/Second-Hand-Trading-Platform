@@ -1,0 +1,59 @@
+.authPage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-dark) 0%, var(--color-gray-dark) 100%);
+  padding: 24px;
+}
+
+.authContainer {
+  width: 100%;
+  max-width: 420px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0 0 8px;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: var(--color-gray-light);
+  margin: 0;
+}
+
+.formWrapper {
+  background: var(--color-white);
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.formWrapper :global(.ant-tabs-nav) {
+  margin-bottom: 24px;
+}
+
+.formWrapper :global(.ant-form-item:last-child) {
+  margin-bottom: 0;
+}
+
+.backHome {
+  text-align: center;
+  margin-top: 24px;
+}
+
+.backHome :global(.ant-btn-link) {
+  color: var(--color-gray-light);
+}
+
+.backHome :global(.ant-btn-link:hover) {
+  color: var(--color-primary);
+}

@@ -1,0 +1,115 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height);
+  background: var(--color-dark);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.container {
+  max-width: var(--content-max-width);
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.logoIcon {
+  font-size: 28px;
+  color: var(--color-primary);
+}
+
+.logoText {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-white);
+}
+
+.search {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  max-width: 400px;
+}
+
+.searchInput {
+  flex: 1;
+}
+
+.categories {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.categoryTag {
+  padding: 4px 12px;
+  border-radius: 16px;
+  background: var(--color-gray-dark);
+  color: var(--color-gray-light);
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.3s;
+}
+
+.categoryTag:hover {
+  background: var(--color-gray);
+  color: var(--color-white);
+}
+
+.categoryTag.active {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.userArea {
+  flex-shrink: 0;
+}
+
+.userInfo {
+  cursor: pointer;
+  color: var(--color-white);
+}
+
+.username {
+  color: var(--color-white);
+  font-size: 14px;
+}
+
+/* 响应式 */
+@media (max-width: 1024px) {
+  .categories {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 16px;
+    gap: 16px;
+  }
+
+  .search {
+    max-width: 200px;
+  }
+
+  .logoText {
+    display: none;
+  }
+}

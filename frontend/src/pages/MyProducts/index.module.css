@@ -1,0 +1,20 @@
+.myProductsPage {
+  min-height: calc(100vh - var(--header-height));
+  background: var(--color-bg);
+  padding: 32px 24px;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.card {
+  border-radius: 12px;
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
