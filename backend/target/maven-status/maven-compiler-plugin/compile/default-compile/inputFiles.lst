@@ -10,6 +10,7 @@ D:\.MyProject\Second-Hand Trading Platform\backend\src\main\java\com\secondhand\
 D:\.MyProject\Second-Hand Trading Platform\backend\src\main\java\com\secondhand\platform\service\AuthService.java
 D:\.MyProject\Second-Hand Trading Platform\backend\src\main\java\com\secondhand\platform\dto\ProductListResponse.java
 D:\.MyProject\Second-Hand Trading Platform\backend\src\main\java\com\secondhand\platform\dto\CategoryResponse.java
+D:\.MyProject\Second-Hand Trading Platform\backend\src\main\java\com\secondhand\platform\dto\ProductItemResponse.java
 D:\.MyProject\Second-Hand Trading Platform\backend\src\main\java\com\secondhand\platform\security\CustomArgon2PasswordEncoder.java
 D:\.MyProject\Second-Hand Trading Platform\backend\src\main\java\com\secondhand\platform\entity\Category.java
 D:\.MyProject\Second-Hand Trading Platform\backend\src\main\java\com\secondhand\platform\exception\GlobalExceptionHandler.java
@@ -25,6 +26,7 @@ D:\.MyProject\Second-Hand Trading Platform\backend\src\main\java\com\secondhand\
 D:\.MyProject\Second-Hand Trading Platform\backend\src\main\java\com\secondhand\platform\entity\Product.java
 D:\.MyProject\Second-Hand Trading Platform\backend\src\main\java\com\secondhand\platform\service\CustomUserDetailsService.java
 D:\.MyProject\Second-Hand Trading Platform\backend\src\main\java\com\secondhand\platform\entity\UserAccount.java
+D:\.MyProject\Second-Hand Trading Platform\backend\src\main\java\com\secondhand\platform\dto\ProductPageResponse.java
 D:\.MyProject\Second-Hand Trading Platform\backend\src\main\java\com\secondhand\platform\repository\ProductRepository.java
 D:\.MyProject\Second-Hand Trading Platform\backend\src\main\java\com\secondhand\platform\service\ProductService.java
 D:\.MyProject\Second-Hand Trading Platform\backend\src\main\java\com\secondhand\platform\dto\AuthResponse.java

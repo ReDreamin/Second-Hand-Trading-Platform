@@ -41,8 +41,9 @@ public class SecurityConfig {
                         // 公开接口 - 认证
                         .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
                         // 公开接口 - 商品浏览和搜索
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/products").permitAll()
                         .requestMatchers("/api/products/search", "/api/products/latest", "/api/products/hot").permitAll()
-                        .requestMatchers("/api/products/{id}").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/products/{id}").permitAll()
                         // 公开接口 - 分类
                         .requestMatchers("/api/categories/**").permitAll()
                         // 公开接口 - 上传的文件访问

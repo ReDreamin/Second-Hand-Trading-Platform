@@ -58,6 +58,16 @@ public class ProductController {
         return ResponseEntity.ok(ApiResponse.success("Product status updated", null));
     }
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<ProductPageResponse>> getProducts(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "12") Integer pageSize,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String category) {
+        ProductPageResponse response = productService.getProducts(page, pageSize, keyword, category);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<PageResponse<ProductListResponse>>> searchProducts(
             @RequestParam(required = false) String keyword,

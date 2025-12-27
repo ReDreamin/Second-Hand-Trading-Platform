@@ -178,6 +178,39 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
+    public ProductPageResponse getProducts(Integer page, Integer pageSize, String keyword, String category) {
+        // 转换为0-based page
+        int pageIndex = Math.max(0, page - 1);
+        Integer categoryId = mapCategoryToId(category);
+
+        Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<Product> productPage;
+        if (StringUtils.hasText(keyword) || categoryId != null) {
+            ProductSearchRequest searchRequest = new ProductSearchRequest();
+            searchRequest.setKeyword(keyword);
+            searchRequest.setCategoryId(categoryId);
+            searchRequest.setPage(pageIndex);
+            searchRequest.setSize(pageSize);
+            Specification<Product> spec = createSearchSpecification(searchRequest);
+            productPage = productRepository.findAll(spec, pageable);
+        } else {
+            productPage = productRepository.findByStatus((short) 1, pageable);
+        }
+
+        List<ProductItemResponse> list = productPage.getContent().stream()
+                .map(ProductItemResponse::fromEntity)
+                .toList();
+
+        return ProductPageResponse.builder()
+                .list(list)
+                .total(productPage.getTotalElements())
+                .page(page)
+                .pageSize(pageSize)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
     public List<ProductListResponse> getLatestProducts(int limit) {
         return productRepository.findTop10ByStatusOrderByCreatedAtDesc((short) 1)
                 .stream()

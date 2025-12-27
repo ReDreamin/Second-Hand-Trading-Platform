@@ -1,12 +1,15 @@
 com\secondhand\platform\dto\ApiResponse$ApiResponseBuilder.class
+com\secondhand\platform\dto\ProductItemResponse.class
 com\secondhand\platform\entity\Category.class
 com\secondhand\platform\controller\CategoryController.class
+com\secondhand\platform\dto\ProductPageResponse$ProductPageResponseBuilder.class
 com\secondhand\platform\dto\ProductResponse.class
 com\secondhand\platform\entity\UserProfile$UserProfileBuilder.class
 com\secondhand\platform\security\CustomArgon2PasswordEncoder.class
 com\secondhand\platform\dto\CategoryResponse.class
 com\secondhand\platform\dto\ProductCreateRequest.class
 com\secondhand\platform\exception\BusinessException.class
+com\secondhand\platform\dto\ProductPageResponse.class
 com\secondhand\platform\entity\UserProfile.class
 com\secondhand\platform\config\WebConfig.class
 com\secondhand\platform\repository\UserProfileRepository.class
@@ -40,6 +43,7 @@ com\secondhand\platform\entity\Product.class
 com\secondhand\platform\entity\UserAccount.class
 com\secondhand\platform\entity\Category$CategoryBuilder.class
 com\secondhand\platform\exception\GlobalExceptionHandler.class
+com\secondhand\platform\dto\ProductItemResponse$ProductItemResponseBuilder.class
 com\secondhand\platform\repository\CategoryRepository.class
 com\secondhand\platform\repository\UserAccountRepository.class
 com\secondhand\platform\repository\ProductRepository.class

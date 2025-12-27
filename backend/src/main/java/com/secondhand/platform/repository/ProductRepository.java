@@ -28,6 +28,9 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     Page<Product> findByStatus(Short status, Pageable pageable);
 
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.seller WHERE p.status = :status")
+    Page<Product> findByStatusWithSeller(@Param("status") Short status, Pageable pageable);
+
     Page<Product> findByCategoryIdAndStatus(Integer categoryId, Short status, Pageable pageable);
 
     @Query("SELECT p FROM Product p WHERE p.status = 1 AND " +
