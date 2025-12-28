@@ -98,11 +98,11 @@ public class ProductController {
     }
 
     @GetMapping("/my")
-    public ResponseEntity<ApiResponse<PageResponse<ProductListResponse>>> getMyProducts(
+    public ResponseEntity<ApiResponse<ProductPageResponse>> getMyProducts(
             @AuthenticationPrincipal UserPrincipal user,
-            @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "20") Integer size) {
-        PageResponse<ProductListResponse> response = productService.getMyProducts(user.getId(), page, size);
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        ProductPageResponse response = productService.getMyProducts(user.getId(), page, pageSize);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

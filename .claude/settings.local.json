@@ -11,7 +11,12 @@
       "Bash(dir:*)",
       "Bash(docker exec:*)",
       "Bash(curl:*)",
-      "Bash(mvn compile spring-boot:run:*)"
+      "Bash(mvn compile spring-boot:run:*)",
+      "Bash(mvn compile:*)",
+      "Bash(ping:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(cat:*)",
+      "Bash(tree:*)"
     ]
   }
 }

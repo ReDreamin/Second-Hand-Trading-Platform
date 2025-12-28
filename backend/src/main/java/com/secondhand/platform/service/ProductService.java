@@ -171,10 +171,22 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<ProductListResponse> getMyProducts(Long sellerId, Integer page, Integer size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+    public ProductPageResponse getMyProducts(Long sellerId, Integer page, Integer pageSize) {
+        // 转换为0-based page
+        int pageIndex = Math.max(0, page - 1);
+        Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Product> productPage = productRepository.findBySellerIdAndStatusNot(sellerId, (short) -1, pageable);
-        return PageResponse.from(productPage, ProductListResponse::fromEntity);
+
+        List<ProductItemResponse> list = productPage.getContent().stream()
+                .map(ProductItemResponse::fromEntity)
+                .toList();
+
+        return ProductPageResponse.builder()
+                .list(list)
+                .total(productPage.getTotalElements())
+                .page(page)
+                .pageSize(pageSize)
+                .build();
     }
 
     @Transactional(readOnly = true)

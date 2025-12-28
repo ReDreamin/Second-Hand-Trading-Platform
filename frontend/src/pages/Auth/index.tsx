@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Form, Input, Button, Tabs, message } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
-import { login, register, changePassword } from '../../api/auth';
+import { login, register } from '../../api/auth';
 import { storage } from '../../utils/storage';
-import type { LoginRequest, RegisterRequest, ChangePasswordRequest } from '../../types';
+import type { LoginRequest, RegisterRequest } from '../../types';
 import styles from './index.module.css';
 
-type TabKey = 'login' | 'register' | 'changePassword';
+type TabKey = 'login' | 'register';
 
 const Auth: React.FC = () => {
   const navigate = useNavigate();
@@ -50,29 +50,6 @@ const Auth: React.FC = () => {
       storage.setUser(user);
       message.success('注册成功');
       navigate(from, { replace: true });
-    } catch {
-      // 错误已在拦截器中处理
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 修改密码处理
-  const handleChangePassword = async (values: ChangePasswordRequest & { confirmPassword: string }) => {
-    if (values.newPassword !== values.confirmPassword) {
-      message.error('两次输入的密码不一致');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await changePassword({
-        oldPassword: values.oldPassword,
-        newPassword: values.newPassword,
-      });
-      message.success('密码修改成功，请重新登录');
-      storage.clearAuth();
-      setActiveTab('login');
     } catch {
       // 错误已在拦截器中处理
     } finally {
@@ -169,48 +146,6 @@ const Auth: React.FC = () => {
           <Form.Item>
             <Button type="primary" htmlType="submit" block loading={loading}>
               注册
-            </Button>
-          </Form.Item>
-        </Form>
-      ),
-    },
-    {
-      key: 'changePassword',
-      label: '修改密码',
-      children: (
-        <Form
-          name="changePassword"
-          onFinish={handleChangePassword}
-          autoComplete="off"
-          size="large"
-        >
-          <Form.Item
-            name="oldPassword"
-            rules={[{ required: true, message: '请输入原密码' }]}
-          >
-            <Input.Password prefix={<LockOutlined />} placeholder="原密码" />
-          </Form.Item>
-
-          <Form.Item
-            name="newPassword"
-            rules={[
-              { required: true, message: '请输入新密码' },
-              { min: 6, message: '密码至少6个字符' },
-            ]}
-          >
-            <Input.Password prefix={<LockOutlined />} placeholder="新密码" />
-          </Form.Item>
-
-          <Form.Item
-            name="confirmPassword"
-            rules={[{ required: true, message: '请确认新密码' }]}
-          >
-            <Input.Password prefix={<LockOutlined />} placeholder="确认新密码" />
-          </Form.Item>
-
-          <Form.Item>
-            <Button type="primary" htmlType="submit" block loading={loading}>
-              修改密码
             </Button>
           </Form.Item>
         </Form>
