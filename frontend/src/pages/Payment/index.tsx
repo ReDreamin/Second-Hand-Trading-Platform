@@ -33,23 +33,14 @@ const Payment: React.FC = () => {
     setLoading(true);
     try {
       const response = await getOrderDetail(parseInt(id));
-      setOrder(response.data.data);
-    } catch {
-      // 模拟数据
-      setOrder({
-        id: 1,
-        orderNo: `ORDER${Date.now()}`,
-        productId: 1,
-        productName: '示例商品',
-        productImage: 'https://picsum.photos/100/100',
-        price: 299.99,
-        quantity: 1,
-        totalAmount: 299.99,
-        status: 'pending',
-        buyerId: 1,
-        sellerId: 2,
-        createdAt: new Date().toISOString(),
-      });
+      if (response.data.code === 200) {
+        setOrder(response.data.data);
+      } else {
+        message.error('获取订单信息失败');
+      }
+    } catch (error) {
+      console.error('获取订单失败:', error);
+      message.error('获取订单信息失败');
     } finally {
       setLoading(false);
     }
@@ -60,16 +51,16 @@ const Payment: React.FC = () => {
 
     setPaying(true);
     try {
-      await payOrder({
+      const response = await payOrder({
         orderId: order.id,
         paymentMethod,
       });
-      setPaymentSuccess(true);
-      message.success('支付成功');
-    } catch {
-      // 模拟成功
-      setPaymentSuccess(true);
-      message.success('支付成功');
+      if (response.data.code === 200) {
+        setPaymentSuccess(true);
+        message.success('支付成功');
+      }
+    } catch (error) {
+      console.error('支付失败:', error);
     } finally {
       setPaying(false);
     }

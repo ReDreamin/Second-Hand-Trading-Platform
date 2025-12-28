@@ -308,6 +308,27 @@ Backend 健康检查:
 │ sort_order       │
 │ created_at       │
 └──────────────────┘
+
+┌──────────────────┐
+│     orders       │
+├──────────────────┤
+│ id (PK)          │
+│ order_no         │
+│ product_id (FK)  │───► products
+│ buyer_id (FK)    │───► user_accounts
+│ seller_id (FK)   │───► user_accounts
+│ product_title    │
+│ product_image    │
+│ product_price    │
+│ quantity         │
+│ total_amount     │
+│ status           │
+│ created_at       │
+│ paid_at          │
+│ shipped_at       │
+│ completed_at     │
+│ cancelled_at     │
+└──────────────────┘
 ```
 
 ### 表结构详解
@@ -389,6 +410,29 @@ Backend 健康检查:
 | sort_order | INT | 排序权重 |
 | created_at | TIMESTAMP | 创建时间 |
 
+#### 6. orders（订单表）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | BIGSERIAL | 主键，自增 |
+| order_no | VARCHAR(32) | 订单号，唯一 |
+| product_id | BIGINT | 商品ID，外键关联 products |
+| buyer_id | BIGINT | 买家ID，外键关联 user_accounts |
+| seller_id | BIGINT | 卖家ID，外键关联 user_accounts |
+| product_title | VARCHAR(128) | 商品标题快照 |
+| product_image | TEXT | 商品图片快照 |
+| product_price | DECIMAL(10,2) | 商品价格快照 |
+| quantity | INT | 购买数量 |
+| total_amount | DECIMAL(10,2) | 订单总金额 |
+| status | SMALLINT | 状态：0=待支付, 1=已支付, 2=已发货, 3=已完成, -1=已取消 |
+| created_at | TIMESTAMP | 创建时间 |
+| paid_at | TIMESTAMP | 支付时间 |
+| shipped_at | TIMESTAMP | 发货时间 |
+| completed_at | TIMESTAMP | 完成时间 |
+| cancelled_at | TIMESTAMP | 取消时间 |
+| buyer_remark | TEXT | 买家备注 |
+| seller_remark | TEXT | 卖家备注 |
+
 ### 索引设计
 
 ```sql
@@ -401,4 +445,12 @@ CREATE INDEX idx_products_price ON products(price);           -- 按价格排序
 
 -- 全文搜索索引（pg_trgm 扩展，支持中文模糊搜索）
 CREATE INDEX idx_products_search ON products USING gin(search_text gin_trgm_ops);
+
+-- 订单查询优化索引
+CREATE INDEX idx_orders_buyer ON orders(buyer_id);            -- 按买家查询
+CREATE INDEX idx_orders_seller ON orders(seller_id);          -- 按卖家查询
+CREATE INDEX idx_orders_product ON orders(product_id);        -- 按商品查询
+CREATE INDEX idx_orders_status ON orders(status);             -- 按状态筛选
+CREATE INDEX idx_orders_created ON orders(created_at DESC);   -- 按时间排序
+CREATE INDEX idx_orders_order_no ON orders(order_no);         -- 按订单号查询
 ```

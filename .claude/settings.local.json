@@ -16,7 +16,8 @@
       "Bash(ping:*)",
       "Bash(docker-compose up:*)",
       "Bash(cat:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(docker logs:*)"
     ]
   }
 }

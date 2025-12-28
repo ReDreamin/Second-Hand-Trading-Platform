@@ -1,10 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Table, Tag, Button, Empty, Image, Tabs } from 'antd';
+import { Card, Table, Tag, Button, Empty, Image, Tabs, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { EyeOutlined } from '@ant-design/icons';
 import type { Order, OrderStatus } from '../../types';
+import { getMyOrders, cancelOrder } from '../../api/order';
 import styles from './index.module.css';
+
+const API_BASE = 'http://localhost:8080';
+
+const getImageUrl = (url: string) => {
+  if (!url) return '/placeholder.png';
+  if (url.startsWith('/uploads')) return `${API_BASE}${url}`;
+  return url;
+};
 
 const statusColors: Record<OrderStatus, string> = {
   pending: 'orange',
@@ -22,78 +31,56 @@ const statusLabels: Record<OrderStatus, string> = {
   cancelled: '已取消',
 };
 
-// Mock data
-const mockPurchases: Order[] = [
-  {
-    id: 1,
-    orderNo: 'PO202401010001',
-    productId: 1,
-    productName: 'iPhone 14 Pro 256GB 深空黑',
-    productImage: 'https://picsum.photos/100/100?random=1',
-    price: 6999,
-    quantity: 1,
-    totalAmount: 6999,
-    status: 'completed',
-    buyerId: 1,
-    sellerId: 2,
-    createdAt: '2024-01-15T10:30:00Z',
-    paidAt: '2024-01-15T10:35:00Z',
-  },
-  {
-    id: 2,
-    orderNo: 'PO202401020002',
-    productId: 2,
-    productName: 'MacBook Air M2 512GB',
-    productImage: 'https://picsum.photos/100/100?random=2',
-    price: 8999,
-    quantity: 1,
-    totalAmount: 8999,
-    status: 'shipped',
-    buyerId: 1,
-    sellerId: 3,
-    createdAt: '2024-01-20T14:20:00Z',
-    paidAt: '2024-01-20T14:25:00Z',
-  },
-  {
-    id: 3,
-    orderNo: 'PO202401030003',
-    productId: 3,
-    productName: 'AirPods Pro 2',
-    productImage: 'https://picsum.photos/100/100?random=3',
-    price: 1299,
-    quantity: 1,
-    totalAmount: 1299,
-    status: 'pending',
-    buyerId: 1,
-    sellerId: 4,
-    createdAt: '2024-01-25T09:15:00Z',
-  },
-];
-
 const Purchases: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [purchases, setPurchases] = useState<Order[]>([]);
   const [activeTab, setActiveTab] = useState<string>('all');
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
 
   useEffect(() => {
     fetchPurchases();
-  }, []);
+  }, [activeTab, page]);
 
   const fetchPurchases = async () => {
     setLoading(true);
     try {
-      // TODO: Replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setPurchases(mockPurchases);
+      const params: { page: number; pageSize: number; status?: string } = {
+        page,
+        pageSize,
+      };
+      if (activeTab !== 'all') {
+        params.status = activeTab;
+      }
+      const response = await getMyOrders(params);
+      if (response.data.code === 200) {
+        const data = response.data.data;
+        setPurchases(data.content || []);
+        setTotal(data.totalElements || 0);
+      }
+    } catch (error) {
+      console.error('获取订单列表失败:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredPurchases = activeTab === 'all'
-    ? purchases
-    : purchases.filter((p) => p.status === activeTab);
+  const handleCancelOrder = async (orderId: number) => {
+    try {
+      await cancelOrder(orderId);
+      message.success('订单已取消');
+      fetchPurchases();
+    } catch (error) {
+      console.error('取消订单失败:', error);
+    }
+  };
+
+  const handleTabChange = (key: string) => {
+    setActiveTab(key);
+    setPage(1);
+  };
 
   const columns: ColumnsType<Order> = [
     {
@@ -102,7 +89,7 @@ const Purchases: React.FC = () => {
       render: (_, record) => (
         <div className={styles.productInfo}>
           <Image
-            src={record.productImage}
+            src={getImageUrl(record.productImage)}
             width={80}
             height={80}
             className={styles.productImage}
@@ -157,7 +144,7 @@ const Purchases: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 120,
+      width: 180,
       render: (_, record) => (
         <div className={styles.actions}>
           <Button
@@ -168,13 +155,22 @@ const Purchases: React.FC = () => {
             查看商品
           </Button>
           {record.status === 'pending' && (
-            <Button
-              type="primary"
-              size="small"
-              onClick={() => navigate(`/payment/${record.id}`)}
-            >
-              去支付
-            </Button>
+            <>
+              <Button
+                type="primary"
+                size="small"
+                onClick={() => navigate(`/payment/${record.id}`)}
+              >
+                去支付
+              </Button>
+              <Button
+                size="small"
+                danger
+                onClick={() => handleCancelOrder(record.id)}
+              >
+                取消
+              </Button>
+            </>
           )}
         </div>
       ),
@@ -195,24 +191,27 @@ const Purchases: React.FC = () => {
         <Card title="购买记录" className={styles.purchasesCard}>
           <Tabs
             activeKey={activeTab}
-            onChange={setActiveTab}
+            onChange={handleTabChange}
             items={tabItems}
           />
 
-          {filteredPurchases.length > 0 ? (
+          {purchases.length > 0 ? (
             <Table
               columns={columns}
-              dataSource={filteredPurchases}
+              dataSource={purchases}
               rowKey="id"
               loading={loading}
               pagination={{
-                pageSize: 10,
+                current: page,
+                pageSize: pageSize,
+                total: total,
                 showTotal: (total) => `共 ${total} 条记录`,
+                onChange: (p) => setPage(p),
               }}
             />
           ) : (
             <Empty
-              description="暂无购买记录"
+              description={loading ? '加载中...' : '暂无购买记录'}
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           )}

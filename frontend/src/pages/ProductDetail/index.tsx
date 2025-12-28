@@ -70,12 +70,13 @@ const ProductDetail: React.FC = () => {
         productId: product.id,
         quantity,
       });
-      const orderId = response.data.data.id;
-      navigate(`/payment/${orderId}`);
-    } catch {
-      // 模拟成功
-      message.success('订单创建成功');
-      navigate(`/payment/mock-order-id`);
+      if (response.data.code === 200) {
+        const orderId = response.data.data.id;
+        message.success('订单创建成功');
+        navigate(`/payment/${orderId}`);
+      }
+    } catch (error) {
+      console.error('创建订单失败:', error);
     } finally {
       setBuying(false);
     }

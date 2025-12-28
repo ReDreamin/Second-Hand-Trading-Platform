@@ -4,7 +4,16 @@ import { Card, Table, Tag, Button, Empty, Image, Tabs, Modal, message } from 'an
 import type { ColumnsType } from 'antd/es/table';
 import { EyeOutlined, SendOutlined } from '@ant-design/icons';
 import type { Order, OrderStatus } from '../../types';
+import { getMySalesOrders, shipOrder } from '../../api/order';
 import styles from './index.module.css';
+
+const API_BASE = 'http://localhost:8080';
+
+const getImageUrl = (url: string) => {
+  if (!url) return '/placeholder.png';
+  if (url.startsWith('/uploads')) return `${API_BASE}${url}`;
+  return url;
+};
 
 const statusColors: Record<OrderStatus, string> = {
   pending: 'orange',
@@ -22,71 +31,37 @@ const statusLabels: Record<OrderStatus, string> = {
   cancelled: '已取消',
 };
 
-// Mock data - 作为卖家收到的订单
-const mockOrders: Order[] = [
-  {
-    id: 101,
-    orderNo: 'SO202401010001',
-    productId: 10,
-    productName: '二手 Switch OLED 白色',
-    productImage: 'https://picsum.photos/100/100?random=10',
-    price: 1899,
-    quantity: 1,
-    totalAmount: 1899,
-    status: 'paid',
-    buyerId: 5,
-    sellerId: 1,
-    createdAt: '2024-01-16T11:30:00Z',
-    paidAt: '2024-01-16T11:35:00Z',
-  },
-  {
-    id: 102,
-    orderNo: 'SO202401020002',
-    productId: 11,
-    productName: '索尼 WH-1000XM5 降噪耳机',
-    productImage: 'https://picsum.photos/100/100?random=11',
-    price: 1999,
-    quantity: 1,
-    totalAmount: 1999,
-    status: 'shipped',
-    buyerId: 6,
-    sellerId: 1,
-    createdAt: '2024-01-18T09:20:00Z',
-    paidAt: '2024-01-18T09:25:00Z',
-  },
-  {
-    id: 103,
-    orderNo: 'SO202401030003',
-    productId: 12,
-    productName: '小米 14 Pro 512GB',
-    productImage: 'https://picsum.photos/100/100?random=12',
-    price: 4299,
-    quantity: 1,
-    totalAmount: 4299,
-    status: 'completed',
-    buyerId: 7,
-    sellerId: 1,
-    createdAt: '2024-01-10T15:45:00Z',
-    paidAt: '2024-01-10T15:50:00Z',
-  },
-];
-
 const Orders: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [activeTab, setActiveTab] = useState<string>('all');
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [activeTab, page]);
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      // TODO: Replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setOrders(mockOrders);
+      const params: { page: number; pageSize: number; status?: string } = {
+        page,
+        pageSize,
+      };
+      if (activeTab !== 'all') {
+        params.status = activeTab;
+      }
+      const response = await getMySalesOrders(params);
+      if (response.data.code === 200) {
+        const data = response.data.data;
+        setOrders(data.content || []);
+        setTotal(data.totalElements || 0);
+      }
+    } catch (error) {
+      console.error('获取订单列表失败:', error);
     } finally {
       setLoading(false);
     }
@@ -99,19 +74,21 @@ const Orders: React.FC = () => {
       okText: '确认发货',
       cancelText: '取消',
       onOk: async () => {
-        // TODO: Call API to ship order
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        message.success('发货成功');
-        setOrders(orders.map(o =>
-          o.id === order.id ? { ...o, status: 'shipped' as OrderStatus } : o
-        ));
+        try {
+          await shipOrder(order.id);
+          message.success('发货成功');
+          fetchOrders();
+        } catch (error) {
+          console.error('发货失败:', error);
+        }
       },
     });
   };
 
-  const filteredOrders = activeTab === 'all'
-    ? orders
-    : orders.filter((o) => o.status === activeTab);
+  const handleTabChange = (key: string) => {
+    setActiveTab(key);
+    setPage(1);
+  };
 
   const columns: ColumnsType<Order> = [
     {
@@ -120,7 +97,7 @@ const Orders: React.FC = () => {
       render: (_, record) => (
         <div className={styles.productInfo}>
           <Image
-            src={record.productImage}
+            src={getImageUrl(record.productImage)}
             width={80}
             height={80}
             className={styles.productImage}
@@ -138,7 +115,7 @@ const Orders: React.FC = () => {
       dataIndex: 'price',
       key: 'price',
       width: 120,
-      render: (price) => <span className={styles.price}>¥{price.toFixed(2)}</span>,
+      render: (price) => <span className={styles.price}>¥{price?.toFixed(2)}</span>,
     },
     {
       title: '数量',
@@ -242,24 +219,27 @@ const Orders: React.FC = () => {
         <Card title="订单管理" className={styles.ordersCard}>
           <Tabs
             activeKey={activeTab}
-            onChange={setActiveTab}
+            onChange={handleTabChange}
             items={tabItems}
           />
 
-          {filteredOrders.length > 0 ? (
+          {orders.length > 0 ? (
             <Table
               columns={columns}
-              dataSource={filteredOrders}
+              dataSource={orders}
               rowKey="id"
               loading={loading}
               pagination={{
-                pageSize: 10,
+                current: page,
+                pageSize: pageSize,
+                total: total,
                 showTotal: (total) => `共 ${total} 条订单`,
+                onChange: (p) => setPage(p),
               }}
             />
           ) : (
             <Empty
-              description="暂无订单"
+              description={loading ? '加载中...' : '暂无订单'}
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           )}
