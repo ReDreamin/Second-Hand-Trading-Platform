@@ -187,3 +187,218 @@ Second-Hand Trading Platform/
 ├── start.bat                      # 一键启动脚本
 └── README.md                      # 项目说明文档
 ```
+
+---
+
+## 部署架构
+
+### Docker 网络结构
+
+项目使用 Docker Compose 进行容器编排，所有服务运行在同一个自定义 Bridge 网络中：
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    secondhand-network (bridge)                  │
+│                                                                 │
+│  ┌─────────────────────┐       ┌─────────────────────┐         │
+│  │   secondhand-db     │       │  secondhand-backend │         │
+│  │   (PostgreSQL 16)   │◄─────►│  (Spring Boot)      │         │
+│  │                     │ JDBC  │                     │         │
+│  │   Port: 5432        │       │   Port: 8080        │         │
+│  └─────────────────────┘       └─────────────────────┘         │
+│           │                             │                       │
+└───────────┼─────────────────────────────┼───────────────────────┘
+            │                             │
+            ▼                             ▼
+     ┌──────────────┐            ┌──────────────┐
+     │ Host: 5432   │            │ Host: 8080   │
+     │ (可选暴露)    │            │ (API访问)    │
+     └──────────────┘            └──────────────┘
+                                        │
+                                        ▼
+                              ┌──────────────────┐
+                              │    Frontend      │
+                              │  (Vite Dev)      │
+                              │  localhost:3000  │
+                              │                  │
+                              │  /api/* ──proxy──►│
+                              └──────────────────┘
+```
+
+### 服务说明
+
+| 服务 | 容器名 | 端口映射 | 说明 |
+|------|--------|----------|------|
+| PostgreSQL | secondhand-db | 5432:5432 | 数据库服务，数据持久化到 Docker Volume |
+| Spring Boot | secondhand-backend | 8080:8080 | 后端API服务，依赖数据库健康检查 |
+| Vite Dev Server | (本地运行) | 3000 | 前端开发服务器，代理 `/api` 到后端 |
+
+### 服务依赖与健康检查
+
+```yaml
+启动顺序: PostgreSQL → Backend → Frontend
+
+PostgreSQL 健康检查:
+  - 命令: pg_isready -U appuser -d secondhand
+  - 间隔: 10s，重试: 5次
+
+Backend 健康检查:
+  - 命令: wget http://localhost:8080/api/products
+  - 间隔: 30s，启动等待: 60s
+```
+
+### 数据持久化
+
+| 类型 | 挂载方式 | 路径 |
+|------|----------|------|
+| 数据库数据 | Docker Volume | `postgres_data:/var/lib/postgresql/data` |
+| 上传文件 | Bind Mount | `./backend/uploads:/app/uploads` |
+
+---
+
+## 数据库设计
+
+### ER 图
+
+```
+┌──────────────────┐       ┌──────────────────┐
+│  user_accounts   │       │  user_profiles   │
+├──────────────────┤       ├──────────────────┤
+│ id (PK)          │◄──┐   │ user_id (PK,FK)  │
+│ username         │   └───│                  │
+│ email            │       │ nickname         │
+│ phone            │       │ avatar_url       │
+│ password_hash    │       │ gender           │
+│ password_algo    │       │ birthday         │
+│ status           │       │ bio              │
+│ created_at       │       │ updated_at       │
+│ updated_at       │       └──────────────────┘
+└──────────────────┘
+         │
+         │ 1:N
+         ▼
+┌──────────────────┐       ┌──────────────────┐
+│    products      │       │   categories     │
+├──────────────────┤       ├──────────────────┤
+│ id (PK)          │   ┌──►│ id (PK)          │
+│ seller_id (FK)   │   │   │ name             │
+│ title            │   │   │ parent_id (FK)   │──┐
+│ cover_url        │   │   │ icon             │  │
+│ description      │   │   │ sort_order       │◄─┘
+│ price            │   │   │ created_at       │ 自引用
+│ original_price   │   │   └──────────────────┘
+│ category_id (FK) │───┘
+│ condition        │
+│ status           │
+│ location         │
+│ view_count       │
+│ search_text      │
+│ created_at       │
+│ updated_at       │
+└──────────────────┘
+         │
+         │ 1:N
+         ▼
+┌──────────────────┐
+│ product_images   │
+├──────────────────┤
+│ id (PK)          │
+│ product_id (FK)  │
+│ image_url        │
+│ sort_order       │
+│ created_at       │
+└──────────────────┘
+```
+
+### 表结构详解
+
+#### 1. user_accounts（用户账户表）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | BIGSERIAL | 主键，自增 |
+| username | VARCHAR(64) | 用户名，唯一 |
+| email | VARCHAR(128) | 邮箱，唯一 |
+| phone | VARCHAR(32) | 手机号，唯一 |
+| password_hash | TEXT | 密码哈希值（不存明文） |
+| password_algo | VARCHAR(32) | 加密算法（bcrypt/argon2） |
+| status | SMALLINT | 状态：1=正常, 0=禁用, -1=删除 |
+| created_at | TIMESTAMP | 创建时间 |
+| updated_at | TIMESTAMP | 更新时间 |
+
+#### 2. user_profiles（用户资料表）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| user_id | BIGINT | 主键，外键关联 user_accounts |
+| nickname | VARCHAR(64) | 昵称 |
+| avatar_url | TEXT | 头像URL |
+| gender | SMALLINT | 性别 |
+| birthday | DATE | 生日 |
+| bio | TEXT | 个人简介 |
+| updated_at | TIMESTAMP | 更新时间 |
+
+#### 3. categories（商品分类表）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | SERIAL | 主键，自增 |
+| name | VARCHAR(64) | 分类名称 |
+| parent_id | INT | 父分类ID（支持层级分类） |
+| icon | VARCHAR(128) | 图标标识 |
+| sort_order | INT | 排序权重 |
+| created_at | TIMESTAMP | 创建时间 |
+
+**预置分类：**
+- 数码电子（手机、电脑、平板、相机、耳机音箱）
+- 服饰鞋包
+- 图书教材
+- 生活用品
+- 美妆护肤
+- 运动户外
+- 游戏娱乐
+- 其他
+
+#### 4. products（商品表）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | BIGSERIAL | 主键，自增 |
+| seller_id | BIGINT | 卖家ID，外键关联 user_accounts |
+| title | VARCHAR(128) | 商品标题 |
+| cover_url | TEXT | 封面图URL |
+| description | TEXT | 商品描述 |
+| price | DECIMAL(10,2) | 售价 |
+| original_price | DECIMAL(10,2) | 原价 |
+| category_id | INT | 分类ID，外键关联 categories |
+| condition | SMALLINT | 成色：10=全新, 9=几乎全新, 8=轻微痕迹, 7=正常痕迹, 5=明显痕迹 |
+| status | SMALLINT | 状态：1=上架, 0=下架, 2=已售, -1=删除 |
+| location | VARCHAR(128) | 交易地点 |
+| view_count | INT | 浏览次数 |
+| search_text | TEXT | 全文搜索字段 |
+| created_at | TIMESTAMP | 创建时间 |
+| updated_at | TIMESTAMP | 更新时间 |
+
+#### 5. product_images（商品图片表）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | BIGSERIAL | 主键，自增 |
+| product_id | BIGINT | 商品ID，外键关联 products（级联删除） |
+| image_url | TEXT | 图片URL |
+| sort_order | INT | 排序权重 |
+| created_at | TIMESTAMP | 创建时间 |
+
+### 索引设计
+
+```sql
+-- 商品查询优化索引
+CREATE INDEX idx_products_seller ON products(seller_id);      -- 按卖家查询
+CREATE INDEX idx_products_category ON products(category_id);  -- 按分类查询
+CREATE INDEX idx_products_status ON products(status);         -- 按状态筛选
+CREATE INDEX idx_products_created ON products(created_at DESC); -- 按时间排序
+CREATE INDEX idx_products_price ON products(price);           -- 按价格排序
+
+-- 全文搜索索引（pg_trgm 扩展，支持中文模糊搜索）
+CREATE INDEX idx_products_search ON products USING gin(search_text gin_trgm_ops);
+```
