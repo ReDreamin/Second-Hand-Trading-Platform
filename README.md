@@ -256,80 +256,186 @@ Backend 健康检查:
 
 ---
 
+## 订单业务模型
+
+### 订单状态流转
+
+订单系统是整个交易平台的核心，连接买家、卖家和商品三方。订单从创建到完成经历以下状态流转：
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              订单状态流转图                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌──────────┐                                                  ┌──────────┐
+  │  买家    │                                                  │  卖家    │
+  └────┬─────┘                                                  └────┬─────┘
+       │                                                              │
+       │ 1. 点击购买                                                   │
+       ▼                                                              │
+  ┌──────────┐      ┌──────────┐                                      │
+  │  pending │─────►│ cancelled│  买家取消订单                         │
+  │  待支付   │      │  已取消   │                                      │
+  └────┬─────┘      └──────────┘                                      │
+       │                                                              │
+       │ 2. 确认支付                                                   │
+       │   └─► 商品状态变为 sold_out（已售出）                          │
+       ▼                                                              │
+  ┌──────────┐                                                        │
+  │   paid   │◄───────────────────────────────────────────────────────┤
+  │  已支付   │                                                        │
+  │ (待发货)  │                                                        │
+  └────┬─────┘                                                        │
+       │                                                              │
+       │ 3. 卖家发货 ◄────────────────────────────────────────────────┘
+       ▼
+  ┌──────────┐
+  │ shipped  │
+  │  已发货   │
+  │ (待收货)  │
+  └────┬─────┘
+       │
+       │ 4. 买家确认收货
+       ▼
+  ┌──────────┐
+  │completed │
+  │  已完成   │
+  └──────────┘
+```
+
+### 订单状态说明
+
+| 状态码 | 状态名 | 英文标识 | 说明 | 可执行操作 |
+|--------|--------|----------|------|------------|
+| 0 | 待支付 | pending | 订单已创建，等待买家支付 | 买家：支付、取消 |
+| 1 | 已支付 | paid | 买家已支付，等待卖家发货 | 卖家：发货 |
+| 2 | 已发货 | shipped | 卖家已发货，等待买家确认收货 | 买家：确认收货 |
+| 3 | 已完成 | completed | 交易完成 | - |
+| -1 | 已取消 | cancelled | 订单已取消 | - |
+
+### 订单与商品联动
+
+订单系统与商品系统紧密关联，确保交易的一致性：
+
+```
+┌─────────────────┐                    ┌─────────────────┐
+│     商品        │                    │     订单        │
+│   (Product)     │                    │    (Order)      │
+├─────────────────┤                    ├─────────────────┤
+│ status: on_sale │◄─── 创建订单 ─────│ status: pending │
+│   (上架中)      │                    │   (待支付)      │
+└────────┬────────┘                    └────────┬────────┘
+         │                                      │
+         │                                      │ 买家支付
+         ▼                                      ▼
+┌─────────────────┐                    ┌─────────────────┐
+│ status: sold_out│◄─── 支付成功 ─────│ status: paid    │
+│   (已售出)      │     自动更新       │   (已支付)      │
+└─────────────────┘                    └─────────────────┘
+```
+
+**关键业务规则：**
+1. **商品快照**：创建订单时，将商品的标题、图片、价格等信息保存到订单中，确保即使商品信息后续变更，订单记录保持不变
+2. **库存校验**：创建订单前检查商品是否仍在售（status = on_sale）
+3. **状态联动**：订单支付成功后，自动将对应商品状态更新为已售出（sold_out）
+4. **买家限制**：用户不能购买自己发布的商品
+
+### API 接口
+
+| 接口 | 方法 | 说明 | 操作者 |
+|------|------|------|--------|
+| `/api/orders` | POST | 创建订单 | 买家 |
+| `/api/orders/my` | GET | 获取我的购买记录 | 买家 |
+| `/api/orders/sales` | GET | 获取我的销售订单 | 卖家 |
+| `/api/orders/{id}` | GET | 获取订单详情 | 买家/卖家 |
+| `/api/orders/pay` | POST | 支付订单 | 买家 |
+| `/api/orders/{id}/ship` | POST | 发货 | 卖家 |
+| `/api/orders/{id}/complete` | POST | 确认收货 | 买家 |
+| `/api/orders/{id}/cancel` | POST | 取消订单 | 买家 |
+
+---
+
 ## 数据库设计
 
 ### ER 图
 
 ```
-┌──────────────────┐       ┌──────────────────┐
-│  user_accounts   │       │  user_profiles   │
-├──────────────────┤       ├──────────────────┤
-│ id (PK)          │◄──┐   │ user_id (PK,FK)  │
-│ username         │   └───│                  │
-│ email            │       │ nickname         │
-│ phone            │       │ avatar_url       │
-│ password_hash    │       │ gender           │
-│ password_algo    │       │ birthday         │
-│ status           │       │ bio              │
-│ created_at       │       │ updated_at       │
-│ updated_at       │       └──────────────────┘
-└──────────────────┘
-         │
-         │ 1:N
-         ▼
-┌──────────────────┐       ┌──────────────────┐
-│    products      │       │   categories     │
-├──────────────────┤       ├──────────────────┤
-│ id (PK)          │   ┌──►│ id (PK)          │
-│ seller_id (FK)   │   │   │ name             │
-│ title            │   │   │ parent_id (FK)   │──┐
-│ cover_url        │   │   │ icon             │  │
-│ description      │   │   │ sort_order       │◄─┘
-│ price            │   │   │ created_at       │ 自引用
-│ original_price   │   │   └──────────────────┘
-│ category_id (FK) │───┘
-│ condition        │
-│ status           │
-│ location         │
-│ view_count       │
-│ search_text      │
-│ created_at       │
-│ updated_at       │
-└──────────────────┘
-         │
-         │ 1:N
-         ▼
-┌──────────────────┐
-│ product_images   │
+                                    ┌──────────────────┐
+                                    │  user_profiles   │
+                                    ├──────────────────┤
+                              ┌────►│ user_id (PK,FK)  │
+                              │     │ nickname         │
+                              │     │ avatar_url       │
+                              │     │ gender           │
+                              │     │ birthday         │
+                              │     │ bio              │
+                              │     │ updated_at       │
+                              │     └──────────────────┘
+                              │ 1:1
+┌──────────────────┐          │
+│  user_accounts   │──────────┘
 ├──────────────────┤
-│ id (PK)          │
-│ product_id (FK)  │
-│ image_url        │
-│ sort_order       │
-│ created_at       │
-└──────────────────┘
-
-┌──────────────────┐
-│     orders       │
-├──────────────────┤
-│ id (PK)          │
-│ order_no         │
-│ product_id (FK)  │───► products
-│ buyer_id (FK)    │───► user_accounts
-│ seller_id (FK)   │───► user_accounts
-│ product_title    │
-│ product_image    │
-│ product_price    │
-│ quantity         │
-│ total_amount     │
-│ status           │
-│ created_at       │
-│ paid_at          │
-│ shipped_at       │
-│ completed_at     │
-│ cancelled_at     │
-└──────────────────┘
+│ id (PK)          │◄─────────────────────────────────────────────┐
+│ username         │◄──────────────────────────┐                  │
+│ email            │                           │                  │
+│ phone            │                           │                  │
+│ password_hash    │     1:N (seller)          │ 1:N (buyer)      │ 1:N (seller)
+│ password_algo    │          │                │                  │
+│ status           │          │                │                  │
+│ created_at       │          │                │                  │
+│ updated_at       │          │                │                  │
+└──────────────────┘          │                │                  │
+         │                    │                │                  │
+         │ 1:N (seller)       │                │                  │
+         ▼                    │                │                  │
+┌──────────────────┐          │      ┌─────────┴──────────────────┴─────────┐
+│    products      │          │      │              orders                  │
+├──────────────────┤          │      ├──────────────────────────────────────┤
+│ id (PK)          │◄─────────┼──────│ product_id (FK)                      │
+│ seller_id (FK)   │──────────┘      │ id (PK)                              │
+│ title            │                 │ order_no (UNIQUE)                    │
+│ cover_url        │   ┌────────────►│ buyer_id (FK)                        │
+│ description      │   │             │ seller_id (FK)                       │
+│ price            │   │             │ product_title      ─┐                │
+│ original_price   │   │             │ product_image       │ 商品快照       │
+│ category_id (FK) │───┼───┐         │ product_price      ─┘                │
+│ condition        │   │   │         │ quantity                             │
+│ status           │◄──┼───┼─────────│ total_amount                         │
+│ location         │   │   │ 支付后   │ status                               │
+│ view_count       │   │   │ 更新为   │ created_at / paid_at                 │
+│ search_text      │   │   │ sold_out │ shipped_at / completed_at            │
+│ created_at       │   │   │         │ cancelled_at                         │
+│ updated_at       │   │   │         │ buyer_remark / seller_remark         │
+└──────────────────┘   │   │         └──────────────────────────────────────┘
+         │             │   │
+         │ 1:N         │   │
+         ▼             │   │
+┌──────────────────┐   │   │         ┌──────────────────┐
+│ product_images   │   │   │         │   categories     │
+├──────────────────┤   │   │         ├──────────────────┤
+│ id (PK)          │   │   └────────►│ id (PK)          │
+│ product_id (FK)  │   │             │ name             │
+│ image_url        │   │             │ parent_id (FK)   │──┐
+│ sort_order       │   │             │ icon             │  │ 自引用
+│ created_at       │   │             │ sort_order       │◄─┘
+└──────────────────┘   │             │ created_at       │
+                       │             └──────────────────┘
+                       │
+             user_accounts (buyer)
 ```
+
+**实体关系说明：**
+
+| 关系 | 说明 |
+|------|------|
+| user_accounts ←1:1→ user_profiles | 一个用户对应一份个人资料 |
+| user_accounts ←1:N→ products | 一个用户（卖家）可发布多个商品 |
+| user_accounts ←1:N→ orders (buyer) | 一个用户（买家）可有多个购买订单 |
+| user_accounts ←1:N→ orders (seller) | 一个用户（卖家）可有多个销售订单 |
+| products ←1:N→ orders | 一个商品可对应多个订单（如取消后重新购买） |
+| products ←1:N→ product_images | 一个商品可有多张图片 |
+| categories ←1:N→ products | 一个分类下可有多个商品 |
+| categories ←自引用→ categories | 支持多级分类结构 |
 
 ### 表结构详解
 

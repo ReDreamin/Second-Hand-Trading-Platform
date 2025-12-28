@@ -103,8 +103,8 @@ const Payment: React.FC = () => {
               <Button type="primary" key="home" onClick={() => navigate('/')}>
                 继续购物
               </Button>,
-              <Button key="orders" onClick={() => navigate('/my-products')}>
-                查看我的商品
+              <Button key="orders" onClick={() => navigate('/purchases')}>
+                查看购买记录
               </Button>,
             ]}
           />
