@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -20,65 +20,67 @@ import java.util.List;
 public class ProductResponse {
 
     private Long id;
+    private String name;
+    private String category;
+    private BigDecimal price;
+    private Integer stock;
+    private String description;
+    private List<String> images;
     private Long sellerId;
     private String sellerName;
-    private String sellerAvatar;
-
-    private String title;
-    private String coverUrl;
-    private String description;
-
-    private BigDecimal price;
-    private BigDecimal originalPrice;
-
-    private Integer categoryId;
-    private String categoryName;
-
-    private Short condition;
-    private Short status;
-    private String location;
-    private Integer viewCount;
-
-    private List<String> imageUrls;
-
+    private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public static ProductResponse fromEntity(Product product) {
-        ProductResponseBuilder builder = ProductResponse.builder()
-                .id(product.getId())
-                .sellerId(product.getSellerId())
-                .title(product.getTitle())
-                .coverUrl(product.getCoverUrl())
-                .description(product.getDescription())
-                .price(product.getPrice())
-                .originalPrice(product.getOriginalPrice())
-                .categoryId(product.getCategoryId())
-                .condition(product.getCondition())
-                .status(product.getStatus())
-                .location(product.getLocation())
-                .viewCount(product.getViewCount())
-                .createdAt(product.getCreatedAt())
-                .updatedAt(product.getUpdatedAt());
-
-        if (product.getSeller() != null) {
-            builder.sellerName(product.getSeller().getUsername());
-        }
-
-        if (product.getCategory() != null) {
-            builder.categoryName(product.getCategory().getName());
-        }
-
+        // 构建图片列表
+        List<String> imageList = new ArrayList<>();
         if (product.getImages() != null && !product.getImages().isEmpty()) {
-            List<String> urls = product.getImages().stream()
+            imageList = product.getImages().stream()
                     .sorted(Comparator.comparingInt(ProductImage::getSortOrder))
                     .map(ProductImage::getImageUrl)
                     .toList();
-            builder.imageUrls(urls);
-        } else {
-            builder.imageUrls(Collections.emptyList());
+        } else if (product.getCoverUrl() != null) {
+            imageList = List.of(product.getCoverUrl());
         }
 
-        return builder.build();
+        return ProductResponse.builder()
+                .id(product.getId())
+                .name(product.getTitle())
+                .category(mapCategoryIdToString(product.getCategoryId()))
+                .price(product.getPrice())
+                .stock(1)
+                .description(product.getDescription())
+                .images(imageList)
+                .sellerId(product.getSellerId())
+                .sellerName(product.getSeller() != null ? product.getSeller().getUsername() : "未知用户")
+                .status(mapStatusToString(product.getStatus()))
+                .createdAt(product.getCreatedAt())
+                .updatedAt(product.getUpdatedAt())
+                .build();
+    }
+
+    private static String mapCategoryIdToString(Integer categoryId) {
+        if (categoryId == null) return "other";
+        return switch (categoryId) {
+            case 1 -> "electronics";
+            case 2 -> "clothing";
+            case 3 -> "shoes";
+            case 4 -> "study";
+            case 5 -> "daily";
+            case 6 -> "sports";
+            case 7 -> "books";
+            default -> "other";
+        };
+    }
+
+    private static String mapStatusToString(Short status) {
+        if (status == null) return "on_sale";
+        return switch (status) {
+            case 1 -> "on_sale";
+            case 0 -> "off_sale";
+            case 2 -> "sold_out";
+            default -> "off_sale";
+        };
     }
 }
