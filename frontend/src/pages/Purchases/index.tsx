@@ -4,7 +4,7 @@ import { Card, Table, Tag, Button, Empty, Image, Tabs, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { EyeOutlined } from '@ant-design/icons';
 import type { Order, OrderStatus } from '../../types';
-import { getMyOrders, cancelOrder } from '../../api/order';
+import { getMyOrders, cancelOrder, completeOrder } from '../../api/order';
 import styles from './index.module.css';
 
 const API_BASE = 'http://localhost:8080';
@@ -74,6 +74,16 @@ const Purchases: React.FC = () => {
       fetchPurchases();
     } catch (error) {
       console.error('取消订单失败:', error);
+    }
+  };
+
+  const handleCompleteOrder = async (orderId: number) => {
+    try {
+      await completeOrder(orderId);
+      message.success('已确认收货');
+      fetchPurchases();
+    } catch (error) {
+      console.error('确认收货失败:', error);
     }
   };
 
@@ -171,6 +181,15 @@ const Purchases: React.FC = () => {
                 取消
               </Button>
             </>
+          )}
+          {record.status === 'shipped' && (
+            <Button
+              type="primary"
+              size="small"
+              onClick={() => handleCompleteOrder(record.id)}
+            >
+              确认收货
+            </Button>
           )}
         </div>
       ),
