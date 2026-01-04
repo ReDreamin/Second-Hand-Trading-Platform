@@ -25,7 +25,7 @@ NWU二手线上交易平台是一个面向校园用户的二手商品交易系�
 - Node.js 18+
 - npm 或 yarn
 
-### 一键启动（推荐）
+### 一键启动(推荐分步启动)
 
 Windows系统下，双击运行 `start.bat` 即可自动完成：
 1. 环境检查（Docker、Node.js）
@@ -47,7 +47,7 @@ start.bat
 docker-compose down
 ```
 
-### 分开启动
+### 分布启动(推荐)
 
 #### 1. 启动数据库和后端
 
@@ -76,23 +76,6 @@ npm run dev
 ```
 
 ---
-
-
-## 测试流程
-
-### 测试账号
-
-卖家账号：
-
-username: yzk
-password: 123456
-特点:上架了大量商品
-
-买家账号:
-
-username: test1
-password: 123456
-
 
 ## 项目技术栈
 
